@@ -9,11 +9,11 @@ git commit -m "Preparar para deploy"
 git push origin main
 ```
 
-### 2️⃣ Criar Banco de Dados no Render
-- Dashboard → New + → PostgreSQL
-- Name: `sisbov-db`
-- Plan: Free
-- **Copiar Internal Database URL**
+### 2️⃣ Obter URL do Banco Neon
+- Acesse [Dashboard do Neon](https://console.neon.tech)
+- Selecione seu projeto
+- Vá em **"Connection Details"**
+- **Copiar Connection String completa**
 
 ### 3️⃣ Criar Web Service
 - Dashboard → New + → Web Service
@@ -28,7 +28,7 @@ Adicionar no painel do serviço:
 | Variável | Valor |
 |----------|-------|
 | `SECRET_KEY` | `python -c "import secrets; print(secrets.token_hex(32))"` |
-| `DATABASE_URL` | `[Internal Database URL do passo 2]` |
+| `DATABASE_URL` | `[URL do Neon copiada no passo 2]` |
 | `PORT` | `10000` |
 | `FLASK_DEBUG` | `false` |
 

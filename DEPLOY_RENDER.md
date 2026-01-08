@@ -6,7 +6,7 @@ Este guia fornece um passo a passo completo para fazer o deploy da aplicação S
 
 1. Conta no [Render](https://render.com) (gratuita)
 2. Código da aplicação no GitHub, GitLab ou Bitbucket
-3. Banco de dados PostgreSQL (pode ser criado no Render ou usar um externo como Neon)
+3. Banco de dados Neon PostgreSQL já configurado (você já tem!)
 
 ---
 
@@ -31,25 +31,21 @@ git push origin main
 
 ---
 
-## 🗄️ Passo 2: Criar Banco de Dados PostgreSQL
+## 🗄️ Passo 2: Obter URL do Banco Neon
 
-### Opção A: Criar no Render (Recomendado)
+Como você já usa o banco Neon, você precisa da URL de conexão:
 
-1. Acesse o [Dashboard do Render](https://dashboard.render.com)
-2. Clique em **"New +"** → **"PostgreSQL"**
-3. Configure:
-   - **Name**: `sisbov-db`
-   - **Database**: `sisbov`
-   - **User**: `sisbov`
-   - **Region**: Escolha a mais próxima (ex: `Oregon (US West)`)
-   - **PostgreSQL Version**: `16` (ou mais recente)
-   - **Plan**: `Free` (para começar)
-4. Clique em **"Create Database"**
-5. **IMPORTANTE**: Anote a **Internal Database URL** e a **External Database URL**
+1. Acesse o [Dashboard do Neon](https://console.neon.tech)
+2. Selecione seu projeto
+3. Vá em **"Connection Details"** ou **"Connection String"**
+4. **Copie a Connection String** (URL completa)
+   - Formato: `postgresql://usuario:senha@host/database?sslmode=require`
+   - Você precisará dessa URL no próximo passo
 
-### Opção B: Usar Banco Existente (Neon, etc.)
-
-Se você já tem um banco de dados PostgreSQL (como Neon), use a URL de conexão existente.
+**💡 Dica**: 
+- Se você não tem a URL salva, ela está no arquivo `src/services/database.py` como valor padrão
+- **Recomendado**: Use a URL atualizada do dashboard do Neon (pode ter mudado)
+- O Neon permite conexões de qualquer IP, então não precisa configurar whitelist
 
 ---
 
@@ -68,7 +64,7 @@ Preencha os seguintes campos:
 
 #### Informações Básicas:
 - **Name**: `sisbov-app` (ou o nome que preferir)
-- **Region**: Escolha a mesma região do banco de dados
+- **Region**: Escolha qualquer região (o banco Neon está na AWS)
 - **Branch**: `main` (ou a branch que você usa)
 - **Root Directory**: Deixe em branco (ou `.` se necessário)
 
@@ -90,7 +86,7 @@ Clique em **"Add Environment Variable"** e adicione:
 | Chave | Valor | Descrição |
 |-------|-------|-----------|
 | `SECRET_KEY` | `[Gere uma chave aleatória]` | Chave secreta para sessões Flask |
-| `DATABASE_URL` | `[URL do banco de dados]` | URL completa do PostgreSQL |
+| `DATABASE_URL` | `[URL do Neon copiada no Passo 2]` | URL completa do Neon PostgreSQL |
 | `PORT` | `10000` | Porta (Render define automaticamente, mas pode usar 10000) |
 | `FLASK_DEBUG` | `false` | Desabilita debug em produção |
 | `PYTHON_VERSION` | `3.11.0` | Versão do Python (opcional) |
@@ -107,13 +103,9 @@ python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
 **DATABASE_URL:**
-- Se criou no Render: Use a **Internal Database URL** (mais segura)
-- Se usa banco externo: Use a URL completa do seu banco
-
-Exemplo de formato:
-```
-postgresql://usuario:senha@host:porta/database?sslmode=require
-```
+- Cole a URL completa do Neon que você copiou no Passo 2
+- Formato: `postgresql://usuario:senha@host/database?sslmode=require&channel_binding=require`
+- **IMPORTANTE**: Use a URL do dashboard do Neon (não a do código, pois pode estar desatualizada)
 
 ### 3.3. Plano e Deploy
 
@@ -182,9 +174,10 @@ Se o deploy falhar, verifique:
 ### Problema: "Database connection error"
 
 **Solução:**
-- Verifique se a `DATABASE_URL` está correta
-- Se usa banco externo, verifique se permite conexões do Render (whitelist de IPs)
-- Para banco no Render, use a **Internal Database URL** (não a External)
+- Verifique se a `DATABASE_URL` está correta e completa
+- O Neon permite conexões de qualquer IP por padrão, então não precisa configurar whitelist
+- Certifique-se de que a URL inclui `?sslmode=require` no final
+- Verifique se a senha na URL está correta (copie do dashboard do Neon)
 
 ### Problema: "Module not found"
 

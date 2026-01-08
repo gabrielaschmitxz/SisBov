@@ -11,13 +11,9 @@ services:
         generateValue: true
       - key: DATABASE_URL
         sync: false
+        # IMPORTANTE: Configure a URL do Neon manualmente no painel do Render
+        # Formato: postgresql://usuario:senha@host/database?sslmode=require
       - key: PORT
         value: 10000
       - key: FLASK_DEBUG
         value: false
-
-databases:
-  - name: sisbov-db
-    plan: free
-    databaseName: sisbov
-    user: sisbov

@@ -652,6 +652,37 @@ def api_get_annual_report(property_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ==================== HEALTH CHECK ====================
+
+@app.route('/health')
+@app.route('/healthz')
+@app.route('/ping')
+def health_check():
+    """Health check endpoint para monitoramento (UptimeRobot, etc.)"""
+    try:
+        # Verificar conexão com o banco de dados
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        # Se chegou aqui, tudo está OK
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'timestamp': datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        # Se houver erro, retornar status não saudável
+        return jsonify({
+            'status': 'unhealthy',
+            'database': 'disconnected',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 503
+
 # ==================== STATIC ROUTES ====================
 
 @app.route('/static/sw.js')
@@ -663,6 +694,18 @@ def service_worker():
 def manifest():
     """Manifest para PWA"""
     return app.send_static_file('manifest.json'), 200, {'Content-Type': 'application/json'}
+
+# ==================== ERROR HANDLERS ====================
+
+@app.errorhandler(404)
+def not_found(error):
+    """Handler para páginas não encontradas"""
+    # Se o usuário estiver logado, redirecionar para a página inicial
+    if 'user_id' in session:
+        flash('Página não encontrada', 'error')
+        return redirect(url_for('index'))
+    # Caso contrário, redirecionar para login
+    return redirect(url_for('login'))
 
 # ==================== INICIAR SERVIDOR ====================
 
