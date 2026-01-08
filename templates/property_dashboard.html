@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}SISBOV - {{ property.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <div>
+            <h2>🏠 {{ property.name }}</h2>
+            <p class="subtitle">🐄 Total de Animais: {{ total_animals }}</p>
+        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">🔄 Trocar Propriedade</a>
+    </div>
+
+    <div class="dashboard-menu">
+        <h3>Menu Principal</h3>
+        <div class="menu-grid">
+            <!-- Verde vivo - Grupo 1 -->
+            <a href="{{ url_for('show_animals', property_id=property.id) }}" class="menu-card" style="background-color: #2E7D32;">
+                <span class="menu-icon">🐄</span>
+                <h4>CADASTRAR ANIMAIS</h4>
+            </a>
+            <a href="{{ url_for('show_births', property_id=property.id) }}" class="menu-card" style="background-color: #2E7D32;">
+                <span class="menu-icon">⭐</span>
+                <h4>NASCIMENTOS</h4>
+            </a>
+            <a href="{{ url_for('show_health', property_id=property.id) }}" class="menu-card" style="background-color: #2E7D32;">
+                <span class="menu-icon">💉</span>
+                <h4>CONTROLE SANITÁRIO / VACINAÇÃO</h4>
+            </a>
+            
+            <!-- Verde oliva - Grupo 2 -->
+            <a href="{{ url_for('show_sales', property_id=property.id) }}" class="menu-card" style="background-color: #6B8E23;">
+                <span class="menu-icon">🛒</span>
+                <h4>VENDAS</h4>
+            </a>
+            <a href="{{ url_for('show_purchases', property_id=property.id) }}" class="menu-card" style="background-color: #6B8E23;">
+                <span class="menu-icon">🛍️</span>
+                <h4>COMPRAS</h4>
+            </a>
+            <a href="{{ url_for('show_gta', property_id=property.id) }}" class="menu-card" style="background-color: #6B8E23;">
+                <span class="menu-icon">📄</span>
+                <h4>CONTROLE DE GTA</h4>
+            </a>
+            
+            <!-- Vermelho vinho vivo - Grupo 3 -->
+            <a href="{{ url_for('show_deaths', property_id=property.id) }}" class="menu-card" style="background-color: #B22222;">
+                <span class="menu-icon">💀</span>
+                <h4>MORTES</h4>
+            </a>
+            <a href="{{ url_for('show_other_animals', property_id=property.id) }}" class="menu-card" style="background-color: #B22222;">
+                <span class="menu-icon">🐾</span>
+                <h4>OUTROS ANIMAIS</h4>
+            </a>
+            
+            <!-- Cinza escuro - Grupo 4 -->
+            <a href="{{ url_for('show_reports', property_id=property.id) }}" class="menu-card" style="background-color: #616161;">
+                <span class="menu-icon">📊</span>
+                <h4>RELATÓRIOS</h4>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

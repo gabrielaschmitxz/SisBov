@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4CAF50">
+    <title>SISBOV - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="background-color: var(--bg-color);">
+    <div class="login-container">
+        <div class="login-card">
+            <h2>SISBOV</h2>
+            <p class="subtitle">Login</p>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('login') }}" class="login-form">
+                <div class="form-group">
+                    <label for="username">Usuário *</label>
+                    <input type="text" id="username" name="username" required autofocus placeholder="Digite seu usuário">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Senha *</label>
+                    <input type="password" id="password" name="password" required placeholder="Digite sua senha">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-login">Entrar</button>
+            </form>
+            
+        </div>
+    </div>
+    
+<style>
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 2rem;
+}
+
+.login-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.login-card h2 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.login-card .subtitle {
+    color: var(--text-light);
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+}
+
+.login-form {
+    margin-top: 1.5rem;
+}
+
+.login-form .form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.login-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.login-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    margin-top: 1rem;
+}
+
+.login-info {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.login-info small {
+    color: var(--text-light);
+}
+
+@media (max-width: 768px) {
+    .login-card {
+        padding: 1.5rem;
+    }
+}
+</style>
+</body>
+</html>
+

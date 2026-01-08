@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}SISBOV - Registro de Vendas - {{ property.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <div>
+            <h2>🛒 Registro de Vendas</h2>
+            <p class="subtitle">Propriedade: {{ property.name }}</p>
+        </div>
+        <div>
+            <a href="{{ url_for('property_detail', property_id=property.id) }}" class="btn btn-secondary">← Voltar</a>
+        </div>
+    </div>
+
+<div class="functionality-container">
+<div class="functionality-container">
+    <div class="form-section">
+        <h3>Registrar Venda</h3>
+        <form id="saleForm" class="form">
+            <div class="form-group">
+                <label for="date">Data *</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="category">Categoria *</label>
+                <select id="category" name="category" required>
+                    <option value="Bezerro">Bezerro</option>
+                    <option value="Bezerra">Bezerra</option>
+                    <option value="Novilho">Novilho</option>
+                    <option value="Novilha">Novilha</option>
+                    <option value="Touro">Touro</option>
+                    <option value="Vaca">Vaca</option>
+                    <option value="Boi">Boi</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sex">Sexo *</label>
+                <select id="sex" name="sex" required>
+                    <option value="Macho">Macho</option>
+                    <option value="Fêmea">Fêmea</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="age_range">Faixa Etária *</label>
+                <select id="age_range" name="age_range" required>
+                    <option value="0 a 6 meses">0 a 6 meses</option>
+                    <option value="7 a 12 meses">7 a 12 meses</option>
+                    <option value="13 a 24 meses">13 a 24 meses</option>
+                    <option value="25 a 36 meses">25 a 36 meses</option>
+                    <option value="Acima de 36 meses">Acima de 36 meses</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantidade *</label>
+                <input type="number" id="quantity" name="quantity" required min="1">
+            </div>
+            <div class="form-group">
+                <label for="destination">Destino</label>
+                <input type="text" id="destination" name="destination" placeholder="Ex: Fazenda ABC, Cidade/Estado">
+            </div>
+            <div class="form-group">
+                <label for="has_gta">Possui GTA *</label>
+                <select id="has_gta" name="has_gta" required>
+                    <option value="Não">Não</option>
+                    <option value="Sim">Sim</option>
+                </select>
+            </div>
+            <div class="form-group" id="gta_number_group" style="display: none;">
+                <label for="gta_number">Número da GTA *</label>
+                <input type="text" id="gta_number" name="gta_number" placeholder="Digite o número da GTA">
+            </div>
+            <button type="submit" class="btn btn-primary">💾 Salvar</button>
+        </form>
+    </div>
+
+    <div class="list-section">
+        <h3>Histórico de Vendas</h3>
+        {% if sales %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Categoria</th>
+                        <th>Sexo</th>
+                        <th>Faixa Etária</th>
+                        <th>Quantidade</th>
+                        <th>Destino</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.date }}</td>
+                        <td>{{ sale.category }}</td>
+                        <td>{{ sale.sex }}</td>
+                        <td>{{ sale.age_range or '-' }}</td>
+                        <td><strong>{{ sale.quantity }}</strong></td>
+                        <td>{{ sale.destination or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-state">Nenhuma venda registrada.</p>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Definir data de hoje como padrão
+document.getElementById('date').valueAsDate = new Date();
+
+// Mostrar/ocultar campo de número da GTA
+const hasGtaSelect = document.getElementById('has_gta');
+const gtaNumberGroup = document.getElementById('gta_number_group');
+const gtaNumberInput = document.getElementById('gta_number');
+
+hasGtaSelect.addEventListener('change', function() {
+    if (this.value === 'Sim') {
+        gtaNumberGroup.style.display = 'block';
+        gtaNumberInput.required = true;
+    } else {
+        gtaNumberGroup.style.display = 'none';
+        gtaNumberInput.required = false;
+        gtaNumberInput.value = '';
+    }
+});
+
+document.getElementById('saleForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    data.quantity = parseInt(data.quantity);
+    
+    // Se não tiver GTA (selecionado "Não"), remover o número da GTA
+    if (data.has_gta === 'Não') {
+        delete data.gta_number;
+    }
+    
+    try {
+        const response = await fetch(`/api/properties/{{ property.id }}/sales`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if (response.ok) location.reload();
+        else alert('Erro: ' + (await response.json()).error);
+    } catch (error) {
+        alert('Erro: ' + error.message);
+    }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}SISBOV - Outros Animais - {{ property.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <div>
+            <h2>🐾 Outros Animais</h2>
+            <p class="subtitle">Propriedade: {{ property.name }}</p>
+        </div>
+        <div>
+            <a href="{{ url_for('property_detail', property_id=property.id) }}" class="btn btn-secondary">← Voltar</a>
+        </div>
+    </div>
+
+<div class="functionality-container">
+<div class="functionality-container">
+    <div class="form-section">
+        <h3>Registrar Outros Animais</h3>
+        <form id="otherAnimalsForm" class="form">
+            <div class="form-group">
+                <label for="species">Espécie *</label>
+                <select id="species" name="species" required>
+                    <option value="Ovinos">Ovinos</option>
+                    <option value="Caprinos">Caprinos</option>
+                    <option value="Equinos">Equinos</option>
+                    <option value="Muares">Muares</option>
+                    <option value="Asininos">Asininos</option>
+                    <option value="Suínos">Suínos</option>
+                    <option value="Aves">Aves</option>
+                    <option value="Caninos">Caninos</option>
+                    <option value="Felinos">Felinos</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sex">Sexo *</label>
+                <select id="sex" name="sex" required>
+                    <option value="Macho">Macho</option>
+                    <option value="Fêmea">Fêmea</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantidade *</label>
+                <input type="number" id="quantity" name="quantity" required min="1">
+            </div>
+            <div class="form-group">
+                <label for="classification">Classificação</label>
+                <select id="classification" name="classification">
+                    <option value="">Selecione...</option>
+                    <option value="Reprodutor">Reprodutor</option>
+                    <option value="Matriz">Matriz</option>
+                    <option value="Animal de Trabalho">Animal de Trabalho</option>
+                    <option value="Animal de Lazer">Animal de Lazer</option>
+                    <option value="Outro">Outro</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">💾 Salvar</button>
+        </form>
+    </div>
+
+    <div class="list-section">
+        <h3>Outros Animais Cadastrados</h3>
+        {% if other_animals %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Espécie</th>
+                        <th>Sexo</th>
+                        <th>Quantidade</th>
+                        <th>Classificação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for animal in other_animals %}
+                    <tr>
+                        <td>{{ animal.species }}</td>
+                        <td>{{ animal.sex }}</td>
+                        <td><strong>{{ animal.quantity }}</strong></td>
+                        <td>{{ animal.classification or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-state">Nenhum outro animal cadastrado.</p>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('otherAnimalsForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    data.quantity = parseInt(data.quantity);
+    if (!data.classification || data.classification === '') {
+        data.classification = null;
+    }
+    
+    try {
+        const response = await fetch(`/api/properties/{{ property.id }}/other_animals`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if (response.ok) location.reload();
+        else alert('Erro: ' + (await response.json()).error);
+    } catch (error) {
+        alert('Erro: ' + error.message);
+    }
+});
+</script>
+{% endblock %}
+

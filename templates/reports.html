@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}SISBOV - Relatórios - {{ property.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <div>
+            <h2>📊 Relatórios</h2>
+            <p class="subtitle">Propriedade: {{ property.name }}</p>
+        </div>
+        <div>
+            <a href="{{ url_for('property_detail', property_id=property.id) }}" class="btn btn-secondary">← Voltar</a>
+        </div>
+    </div>
+
+    <div class="functionality-container">
+        <!-- Resumo Geral -->
+        <div class="summary-section">
+            <h3>Resumo Geral</h3>
+            <div class="summary-grid">
+                <div class="summary-card" style="background-color: #66BB6A;">
+                    <div class="summary-label">Total de Animais</div>
+                    <div class="summary-value" id="total_animals">Carregando...</div>
+                </div>
+                <div class="summary-card" style="background-color: #81C784;">
+                    <div class="summary-label">Total de Nascimentos</div>
+                    <div class="summary-value" id="total_births">Carregando...</div>
+                </div>
+                <div class="summary-card" style="background-color: #8D6E63;">
+                    <div class="summary-label">Total de Mortes</div>
+                    <div class="summary-value" id="total_deaths">Carregando...</div>
+                </div>
+                <div class="summary-card" style="background-color: #A5D6A7;">
+                    <div class="summary-label">Total de Vendas</div>
+                    <div class="summary-value" id="total_sales">Carregando...</div>
+                </div>
+                <div class="summary-card" style="background-color: #0D4F14;">
+                    <div class="summary-label">Total de Compras</div>
+                    <div class="summary-value" id="total_purchases">Carregando...</div>
+                </div>
+                <div class="summary-card" style="background-color: #388E3C;">
+                    <div class="summary-label">Procedimentos Sanitários</div>
+                    <div class="summary-value" id="total_health">Carregando...</div>
+                </div>
+                <div class="summary-card" style="background-color: #795548;">
+                    <div class="summary-label">Outros Animais</div>
+                    <div class="summary-value" id="total_other_animals">Carregando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botão Relatório Anual -->
+        <div class="report-button-section">
+            <button class="btn btn-primary btn-report" id="generateAnnualReport">
+                📋 Relatório Anual
+            </button>
+        </div>
+
+        <!-- Área de Exibição do Relatório -->
+        <div class="report-display-section">
+            <h3>Relatório</h3>
+            <div class="report-text-container">
+                <pre id="reportText" class="report-text">Clique em "Relatório Anual" para gerar o relatório consolidado.</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Carregar resumo ao carregar a página
+async function loadSummary() {
+    try {
+        const response = await fetch(`/api/properties/{{ property.id }}/summary`);
+        if (response.ok) {
+            const summary = await response.json();
+            document.getElementById('total_animals').textContent = summary.total_animals || 0;
+            document.getElementById('total_births').textContent = summary.total_births || 0;
+            document.getElementById('total_deaths').textContent = summary.total_deaths || 0;
+            document.getElementById('total_sales').textContent = summary.total_sales || 0;
+            document.getElementById('total_purchases').textContent = summary.total_purchases || 0;
+            document.getElementById('total_health').textContent = summary.total_health || 0;
+            document.getElementById('total_other_animals').textContent = summary.total_other_animals || 0;
+        }
+    } catch (error) {
+        console.error('Erro ao carregar resumo:', error);
+    }
+}
+
+// Gerar relatório anual
+document.getElementById('generateAnnualReport').addEventListener('click', async function() {
+    const reportText = document.getElementById('reportText');
+    reportText.textContent = 'Gerando relatório anual...\nPor favor, aguarde...';
+    
+    try {
+        const year = new Date().getFullYear();
+        const response = await fetch(`/api/properties/{{ property.id }}/reports/annual?year=${year}`);
+        if (response.ok) {
+            const report = await response.json();
+            formatAnnualReport(report, year);
+        } else {
+            const error = await response.json();
+            reportText.textContent = 'Erro ao gerar relatório: ' + error.error;
+        }
+    } catch (error) {
+        reportText.textContent = 'Erro ao gerar relatório: ' + error.message;
+    }
+});
+
+function formatAnnualReport(report, year) {
+    let text = `RELATÓRIO ANUAL CONSOLIDADO - ${year}\n`;
+    text += '='.repeat(70) + '\n\n';
+    
+    // Composição do Rebanho
+    text += '1. COMPOSIÇÃO DO REBANHO\n';
+    text += `   Total de Animais: ${report.herd_composition.total}\n`;
+    if (report.herd_composition.data && report.herd_composition.data.length > 0) {
+        text += '   Detalhamento:\n';
+        report.herd_composition.data.forEach(item => {
+            const purpose = item.purpose || '';
+            const age_range = item.age_range ? ` | ${item.age_range}` : '';
+            text += `     • ${purpose} | ${item.category} | ${item.sex}${age_range}: ${item.quantity}\n`;
+        });
+    } else {
+        text += '   Nenhum animal cadastrado\n';
+    }
+    text += '\n';
+    
+    // Nascimentos
+    text += '2. NASCIMENTOS\n';
+    text += `   Total: ${report.births.total}\n`;
+    if (report.births.data && report.births.data.length > 0) {
+        text += '   Detalhamento:\n';
+        report.births.data.forEach(item => {
+            text += `     • Data: ${item.date} | Sexo: ${item.sex} | Quantidade: ${item.quantity}\n`;
+        });
+    } else {
+        text += '   Nenhum nascimento registrado\n';
+    }
+    text += '\n';
+    
+    // Mortes
+    text += '3. MORTES\n';
+    text += `   Total: ${report.deaths.total}\n`;
+    if (report.deaths.data && report.deaths.data.length > 0) {
+        text += '   Detalhamento:\n';
+        report.deaths.data.forEach(item => {
+            const age_range = item.age_range ? ` | Faixa Etária: ${item.age_range}` : '';
+            const cause = item.cause ? ` | Causa: ${item.cause}` : '';
+            text += `     • Data: ${item.date} | ${item.category} | ${item.sex}${age_range} | Quantidade: ${item.quantity}${cause}\n`;
+        });
+    } else {
+        text += '   Nenhuma morte registrada\n';
+    }
+    text += '\n';
+    
+    // Vendas
+    text += '4. VENDAS\n';
+    text += `   Total: ${report.sales.total}\n`;
+    if (report.sales.data && report.sales.data.length > 0) {
+        text += '   Detalhamento:\n';
+        report.sales.data.forEach(item => {
+            const age_range = item.age_range ? ` | Faixa Etária: ${item.age_range}` : '';
+            const gta = item.has_gta ? ` | GTA: ${item.gta_number || 'N/A'}` : ' | GTA: Não';
+            const destination = item.destination ? ` | Destino: ${item.destination}` : '';
+            text += `     • Data: ${item.date} | ${item.category} | ${item.sex}${age_range} | Quantidade: ${item.quantity}${gta}${destination}\n`;
+        });
+    } else {
+        text += '   Nenhuma venda registrada\n';
+    }
+    text += '\n';
+    
+    // Compras
+    text += '5. COMPRAS\n';
+    text += `   Total: ${report.purchases.total}\n`;
+    if (report.purchases.data && report.purchases.data.length > 0) {
+        text += '   Detalhamento:\n';
+        report.purchases.data.forEach(item => {
+            const age_range = item.age_range ? ` | Faixa Etária: ${item.age_range}` : '';
+            const gta = item.has_gta ? ` | GTA: ${item.gta_number || 'N/A'}` : ' | GTA: Não';
+            text += `     • Data: ${item.date} | Origem: ${item.origin} | ${item.category} | ${item.sex}${age_range} | Quantidade: ${item.quantity}${gta}\n`;
+        });
+    } else {
+        text += '   Nenhuma compra registrada\n';
+    }
+    text += '\n';
+    
+    // Procedimentos Sanitários
+    text += '6. PROCEDIMENTOS SANITÁRIOS\n';
+    text += `   Total de Procedimentos: ${report.health.total_procedures}\n`;
+    text += `   Total de Animais Atendidos: ${report.health.total_animals}\n`;
+    if (report.health.data && report.health.data.length > 0) {
+        text += '   Detalhamento:\n';
+        report.health.data.forEach(item => {
+            const vaccination_type = item.vaccination_type ? ` | Tipo Vacinação: ${item.vaccination_type}` : '';
+            const age_range = item.age_range ? ` | Faixa Etária: ${item.age_range}` : '';
+            const next_date = item.next_application_date ? ` | Próxima Aplicação: ${item.next_application_date}` : '';
+            text += `     • Data: ${item.application_date} | ${item.procedure_type}${vaccination_type} | ${item.product} | ${item.category} | ${item.sex}${age_range} | Quantidade: ${item.quantity}${next_date}\n`;
+        });
+    } else {
+        text += '   Nenhum procedimento registrado\n';
+    }
+    text += '\n';
+    
+    // Outros Animais
+    text += '7. OUTROS ANIMAIS\n';
+    text += `   Total: ${report.other_animals.total} animais\n`;
+    if (report.other_animals.data && report.other_animals.data.length > 0) {
+        text += '   Detalhamento:\n';
+        report.other_animals.data.forEach(animal => {
+            const classification = animal.classification ? ` | Classificação: ${animal.classification}` : '';
+            text += `     • ${animal.species} | ${animal.sex} | Quantidade: ${animal.quantity}${classification}\n`;
+        });
+    } else {
+        text += '   Nenhum outro animal cadastrado\n';
+    }
+    
+    document.getElementById('reportText').textContent = text;
+}
+
+// Carregar resumo ao iniciar
+loadSummary();
+</script>
+{% endblock %}

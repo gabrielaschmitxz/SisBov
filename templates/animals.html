@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}SISBOV - Cadastro de Animais - {{ property.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <div>
+            <h2>🐄 Cadastro de Animais</h2>
+            <p class="subtitle">Propriedade: {{ property.name }}</p>
+        </div>
+        <div>
+            <a href="{{ url_for('property_detail', property_id=property.id) }}" class="btn btn-secondary">← Voltar</a>
+        </div>
+    </div>
+
+<div class="functionality-container">
+<div class="functionality-container">
+    <!-- Formulário -->
+    <div class="form-section">
+        <h3>Cadastrar Grupo de Animais</h3>
+        <form id="animalForm" class="form">
+            <div class="form-group">
+                <label for="purpose">Finalidade *</label>
+                <select id="purpose" name="purpose" required>
+                    <option value="Corte">Corte</option>
+                    <option value="Leite">Leite</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="category">Categoria *</label>
+                <select id="category" name="category" required>
+                    <option value="Bezerro">Bezerro</option>
+                    <option value="Bezerra">Bezerra</option>
+                    <option value="Novilho">Novilho</option>
+                    <option value="Novilha">Novilha</option>
+                    <option value="Touro">Touro</option>
+                    <option value="Vaca">Vaca</option>
+                    <option value="Boi">Boi</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sex">Sexo *</label>
+                <select id="sex" name="sex" required>
+                    <option value="Macho">Macho</option>
+                    <option value="Fêmea">Fêmea</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="age_range">Faixa Etária *</label>
+                <select id="age_range" name="age_range" required>
+                    <option value="0 a 6 meses">0 a 6 meses</option>
+                    <option value="7 a 12 meses">7 a 12 meses</option>
+                    <option value="13 a 24 meses">13 a 24 meses</option>
+                    <option value="25 a 36 meses">25 a 36 meses</option>
+                    <option value="Acima de 36 meses">Acima de 36 meses</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantidade *</label>
+                <input type="number" id="quantity" name="quantity" required min="1">
+            </div>
+            <button type="submit" class="btn btn-primary">💾 Salvar</button>
+        </form>
+    </div>
+
+    <!-- Lista de Animais -->
+    <div class="list-section">
+        <h3>Animais Cadastrados</h3>
+        <div id="animals-list">
+            {% if animals %}
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Finalidade</th>
+                            <th>Categoria</th>
+                            <th>Sexo</th>
+                            <th>Faixa Etária</th>
+                            <th>Quantidade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for animal in animals %}
+                        <tr>
+                            <td>{{ animal.purpose }}</td>
+                            <td>{{ animal.category }}</td>
+                            <td>{{ animal.sex }}</td>
+                            <td>{{ animal.age_range or '-' }}</td>
+                            <td><strong>{{ animal.quantity }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-state">Nenhum animal cadastrado.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('animalForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    data.quantity = parseInt(data.quantity);
+    
+    try {
+        const response = await fetch(`/api/properties/{{ property.id }}/animals`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('Erro: ' + error.error);
+        }
+    } catch (error) {
+        alert('Erro ao salvar: ' + error.message);
+    }
+});
+</script>
+{% endblock %}
+

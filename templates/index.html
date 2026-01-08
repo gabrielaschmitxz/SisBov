@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}SISBOV - Propriedades{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <h2>Propriedades Cadastradas</h2>
+        <button class="btn btn-primary" onclick="openNewPropertyModal()">
+            ➕ Nova Propriedade
+        </button>
+    </div>
+
+    <div id="properties-list" class="properties-grid">
+        {% if properties %}
+            {% for prop in properties %}
+            <div class="property-card" onclick="selectProperty({{ prop.id }})">
+                <div class="property-header">
+                    <h3>{{ prop.name }}</h3>
+                </div>
+                <div class="property-info">
+                    <p><strong>Titular:</strong> {{ prop.owner_name }}</p>
+                </div>
+                <div class="property-actions" onclick="event.stopPropagation();">
+                    <button class="btn-action btn-edit" onclick="editProperty({{ prop.id }})">
+                        📝 Editar
+                    </button>
+                    <button class="btn-action btn-delete" onclick="deleteProperty({{ prop.id }})">
+                        🗑️ Excluir
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <p>📭 Nenhuma propriedade cadastrada</p>
+                <button class="btn btn-primary" onclick="openNewPropertyModal()">
+                    Cadastrar Primeira Propriedade
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Nova/Editar Propriedade -->
+<div id="propertyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Nova Propriedade</h3>
+            <span class="close" onclick="closePropertyModal()">&times;</span>
+        </div>
+        <form id="propertyForm" class="modal-body">
+            <input type="hidden" id="property_id" name="property_id">
+            <div class="form-group">
+                <label for="name">Nome da Propriedade *</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="owner_name">Nome do Proprietário *</label>
+                <input type="text" id="owner_name" name="owner_name" required>
+            </div>
+            <div class="form-group">
+                <label for="cpf_cnpj">CPF/CNPJ</label>
+                <input type="text" id="cpf_cnpj" name="cpf_cnpj">
+            </div>
+            <div class="form-group">
+                <label for="city">Município *</label>
+                <input type="text" id="city" name="city" required>
+            </div>
+            <div class="form-group">
+                <label for="state">Estado *</label>
+                <input type="text" id="state" name="state" required maxlength="2" placeholder="Ex: MG">
+            </div>
+            <div class="form-group">
+                <label for="address">Endereço</label>
+                <textarea id="address" name="address" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="area">Área (hectares)</label>
+                <input type="number" id="area" name="area" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label for="natural_pasture_area">Área de pastagem natural (ha)</label>
+                <input type="number" id="natural_pasture_area" name="natural_pasture_area" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label for="cultivated_pasture_area">Área de pastagem cultivada (ha)</label>
+                <input type="number" id="cultivated_pasture_area" name="cultivated_pasture_area" step="0.01" min="0">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variável global para armazenar propriedade sendo editada
+let editingPropertyId = null;
+
+function openNewPropertyModal() {
+    editingPropertyId = null;
+    document.getElementById('modalTitle').textContent = 'Nova Propriedade';
+    document.getElementById('property_id').value = '';
+    document.getElementById('propertyModal').style.display = 'block';
+    initializeCPFCNPJFormatting();
+}
+
+function closePropertyModal() {
+    document.getElementById('propertyModal').style.display = 'none';
+    document.getElementById('propertyForm').reset();
+    editingPropertyId = null;
+}
+
+async function editProperty(id) {
+    editingPropertyId = id;
+    document.getElementById('modalTitle').textContent = 'Editar Propriedade';
+    document.getElementById('property_id').value = id;
+    
+    try {
+        const response = await fetch(`/api/properties/${id}`);
+        if (response.ok) {
+            const prop = await response.json();
+            document.getElementById('name').value = prop.name || '';
+            document.getElementById('owner_name').value = prop.owner_name || '';
+            document.getElementById('cpf_cnpj').value = prop.cpf_cnpj || '';
+            document.getElementById('city').value = prop.city || '';
+            document.getElementById('state').value = prop.state || '';
+            document.getElementById('address').value = prop.address || '';
+            document.getElementById('area').value = prop.area || '';
+            document.getElementById('natural_pasture_area').value = prop.natural_pasture_area || '';
+            document.getElementById('cultivated_pasture_area').value = prop.cultivated_pasture_area || '';
+            openNewPropertyModal();
+            // Formatar CPF/CNPJ se existir
+            if (prop.cpf_cnpj) {
+                document.getElementById('cpf_cnpj').value = formatCPFCNPJ(prop.cpf_cnpj);
+            }
+        } else {
+            alert('Erro ao carregar propriedade');
+        }
+    } catch (error) {
+        alert('Erro: ' + error.message);
+    }
+}
+
+function selectProperty(id) {
+    // Redireciona para o dashboard da propriedade
+    window.location.href = `/property/${id}`;
+}
+
+async function deleteProperty(id) {
+    if (!confirm('Deseja realmente excluir esta propriedade?\n\nTodos os dados relacionados serão perdidos!')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/properties/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('Erro: ' + error.error);
+        }
+    } catch (error) {
+        alert('Erro ao excluir: ' + error.message);
+    }
+}
+
+document.getElementById('propertyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    const propertyId = data.property_id;
+    
+    // Converter áreas para número
+    if (data.area) data.area = parseFloat(data.area);
+    if (data.natural_pasture_area) data.natural_pasture_area = parseFloat(data.natural_pasture_area);
+    if (data.cultivated_pasture_area) data.cultivated_pasture_area = parseFloat(data.cultivated_pasture_area);
+    delete data.property_id;
+    
+    try {
+        const url = propertyId ? `/api/properties/${propertyId}` : '/api/properties';
+        const method = propertyId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('Erro: ' + error.error);
+        }
+    } catch (error) {
+        alert('Erro ao salvar: ' + error.message);
+    }
+});
+
+// Fechar modal ao clicar fora
+window.onclick = function(event) {
+    const modal = document.getElementById('propertyModal');
+    if (event.target == modal) {
+        closePropertyModal();
+    }
+}
+
+// Formatação de CPF/CNPJ
+function formatCPFCNPJ(value) {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
+    
+    if (numbers.length <= 11) {
+        // CPF: 000.000.000-00
+        if (numbers.length <= 3) {
+            return numbers;
+        } else if (numbers.length <= 6) {
+            return numbers.slice(0, 3) + '.' + numbers.slice(3);
+        } else if (numbers.length <= 9) {
+            return numbers.slice(0, 3) + '.' + numbers.slice(3, 6) + '.' + numbers.slice(6);
+        } else {
+            return numbers.slice(0, 3) + '.' + numbers.slice(3, 6) + '.' + numbers.slice(6, 9) + '-' + numbers.slice(9, 11);
+        }
+    } else {
+        // CNPJ: 00.000.000/0000-00
+        if (numbers.length <= 2) {
+            return numbers;
+        } else if (numbers.length <= 5) {
+            return numbers.slice(0, 2) + '.' + numbers.slice(2);
+        } else if (numbers.length <= 8) {
+            return numbers.slice(0, 2) + '.' + numbers.slice(2, 5) + '.' + numbers.slice(5);
+        } else if (numbers.length <= 12) {
+            return numbers.slice(0, 2) + '.' + numbers.slice(2, 5) + '.' + numbers.slice(5, 8) + '/' + numbers.slice(8);
+        } else {
+            return numbers.slice(0, 2) + '.' + numbers.slice(2, 5) + '.' + numbers.slice(5, 8) + '/' + numbers.slice(8, 12) + '-' + numbers.slice(12, 14);
+        }
+    }
+}
+
+// Função para inicializar formatação de CPF/CNPJ
+function initializeCPFCNPJFormatting() {
+    const cpfCnpjField = document.getElementById('cpf_cnpj');
+    if (cpfCnpjField) {
+        // Remove event listeners antigos (se existirem)
+        const newField = cpfCnpjField.cloneNode(true);
+        cpfCnpjField.parentNode.replaceChild(newField, cpfCnpjField);
+        
+        // Adiciona novo event listener
+        document.getElementById('cpf_cnpj').addEventListener('input', function(e) {
+            const cursorPosition = e.target.selectionStart;
+            const oldValue = e.target.value;
+            const formattedValue = formatCPFCNPJ(e.target.value);
+            e.target.value = formattedValue;
+            
+            // Reposicionar cursor
+            const lengthDiff = formattedValue.length - oldValue.length;
+            const newPosition = Math.max(0, cursorPosition + lengthDiff);
+            e.target.setSelectionRange(newPosition, newPosition);
+        });
+    }
+}
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCPFCNPJFormatting();
+});
+</script>
+{% endblock %}
+
